@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {Observable} from "rxjs";
+import {map, Observable} from "rxjs";
 import {Response} from "../interface/response";
 import {User} from "../interface/user";
 
@@ -13,12 +13,14 @@ export class UserService {
 
   constructor( private http: HttpClient) { }
 
-  getUsers(size: number = 10): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/?results=${size}`);
+  getUsers(size: number = 10): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/?results=${size}`)
+      .pipe(map(response => this.processResponse(response)));
   }
 
   getUser(uuid: number = 1): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/?uuid=${uuid}`);
+    return this.http.get<any>(`${this.apiUrl}/?uuid=${uuid}`)
+      .pipe(map(response => this.processResponse(response)));
   }
 
   private processResponse(response: Response): Response {
@@ -31,16 +33,13 @@ export class UserService {
         email: user.email,
         username: user.login.username,
         gender: user.gender,
-        address: `${user.location.street.number}
-                  ${user.location.street.name}
-                  ${user.location.city},
-                  ${user.location.country}`,
+        address: `${user.location.street.number} ${user.location.street.name} ${user.location.city}, ${user.location.country}`,
         dataOfBirth: user.dob.date,
         phone: user.phone,
         imageUrl: user.picture.medium,
         coordinate: {
-          latitude: user.location.coordinates.latitude,
-          longitude: user.location.coordinates.longitude
+          latitude: +user.location.coordinates.latitude,
+          longitude: +user.location.coordinates.longitude
         }
       }))
     };
